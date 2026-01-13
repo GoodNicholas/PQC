@@ -1,0 +1,67 @@
+# Build artifacts
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Experimental results
+*.dat
+results/
+saber_results/
+experiment_*.log
+*.json
+*.png
+*.pdf
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+venv/
+env/
+
+# Archives
+*.tar.gz
+*.zip
+*.tgz
+
+# Documentation builds
+docs/_build/
+docs/html/
+docs/latex/
+
+# Test binaries
+test_*
+!test_*.c
+benchmark_*
+!experiment_benchmark.c
+
+# Batch testing artifacts (keep source, ignore builds)
+BATCHING/build/
+BATCHING/*.o
