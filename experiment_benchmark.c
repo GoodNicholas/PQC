@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include "api.h"
 
-#ifdef ENABLE_BATCHING
+#ifdef SABER_BATCHING_ENABLED
 #include "batch/batch_kem.h"
 #endif
 
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
     uint8_t ss_enc[SABER_SHARED_KEY_BYTES];
     uint8_t ss_dec[SABER_SHARED_KEY_BYTES];
 
-#ifndef ENABLE_BATCHING
+#ifndef SABER_BATCHING_ENABLED
     // =====================================================================
     // NON-BATCHING MODE: Standard sequential measurements
     // =====================================================================
@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
     }
     printf("\n");
 
-#else // ENABLE_BATCHING
+#else // SABER_BATCHING_ENABLED
     // =====================================================================
     // BATCHING MODE: Measure sequential (2×1) vs batched (1×2)
     // =====================================================================
@@ -375,14 +375,14 @@ int main(int argc, char* argv[]) {
 
     // Cleanup batching
     saber_batch_cleanup();
-#endif // ENABLE_BATCHING
+#endif // SABER_BATCHING_ENABLED
 
     // Success
     printf("════════════════════════════════════════════════════════════\n");
     printf("✓ Benchmark completed successfully!\n");
     printf("\n");
     printf("Output files saved to: %s/\n", output_dir);
-#ifndef ENABLE_BATCHING
+#ifndef SABER_BATCHING_ENABLED
     printf("  - keygen.dat (N=%d measurements)\n", N_MEASUREMENTS);
     printf("  - encaps.dat (N=%d measurements)\n", N_MEASUREMENTS);
     printf("  - decaps.dat (N=%d measurements)\n", N_MEASUREMENTS);

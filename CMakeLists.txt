@@ -185,9 +185,9 @@ if(SABER_CONFIG STREQUAL "DEFAULT" OR SABER_CONFIG STREQUAL "GOST" OR SABER_CONF
     set(POLY_SOURCES src/poly/poly_toom.c)
     message(STATUS "Poly module: Toom-Cook")
 elseif(SABER_CONFIG STREQUAL "FAST" AND IS_ARM64)
-    # FAST временно использует Toom-Cook (NTT требует доработки)
-    set(POLY_SOURCES src/poly/poly_toom.c)
-    message(STATUS "Poly module: Toom-Cook (NTT disabled)")
+    # FAST использует poly_ntt_neon.c - Incomplete-NTT NEON оптимизация
+    set(POLY_SOURCES src/poly/poly_ntt_neon.c)
+    message(STATUS "Poly module: NTT-Incomplete NEON")
 elseif(SABER_CONFIG STREQUAL "FAST_V2" AND IS_ARM64)
     # FAST_V2 использует базовый neon-ntt (TCHES 2022) без asymmetric multiplication
     # asymmetric_mul несовместим с архитектурой SABER_GOST (см. FINDINGS.md)
@@ -265,11 +265,9 @@ endif()
 set(NEON_OPTIMIZATION_SOURCES "")
 if(IS_ARM64)
     if(SABER_CONFIG STREQUAL "FAST" OR SABER_CONFIG STREQUAL "FAST_V2")
-        # Для FAST pack/unpack обрабатывается через wrapper
-        set(NEON_OPTIMIZATION_SOURCES
-            src/pack_unpack_neon.c  # Реализация NEON функций
-        )
-        message(STATUS "FAST: Using NEON-optimized fips202, pack/unpack")
+        # Для FAST используется poly_ntt_neon.c с встроенными NEON оптимизациями
+        # pack/unpack NEON оптимизации уже включены в poly_ntt_neon.c
+        message(STATUS "FAST: Using poly_ntt_neon with built-in NEON optimizations")
     elseif(SABER_CONFIG STREQUAL "GOST_FAST")
         set(NEON_OPTIMIZATION_SOURCES
             src/pack_unpack_neon.c
