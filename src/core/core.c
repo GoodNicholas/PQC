@@ -17,7 +17,7 @@
 #include "../include/poly.h"
 #include "../include/config.h"
 #include "../include/params.h"
-#include "../../SABER/Reference_Implementation_KEM/SABER_indcpa.h"
+#include "../external/saber_ref/SABER_indcpa.h"
 #include <string.h>
 
 /* ========================================================================

@@ -15,8 +15,8 @@
 #include "../../include/poly.h"
 #include "../../include/config.h"
 #include "../../include/params.h"
-#include "../../../SABER/Reference_Implementation_KEM/poly.h"
-#include "../../../SABER/Reference_Implementation_KEM/poly_mul.h"
+#include "../../external/saber_ref/poly.h"
+#include "../../external/saber_ref/poly_mul.h"
 
 /*
  * All polynomial operations are provided by Reference_Implementation/poly_mul.c:

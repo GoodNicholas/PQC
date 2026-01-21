@@ -1,7 +1,7 @@
 #ifndef SABER_PARAMS_H
 #define SABER_PARAMS_H
 
-#include "../../SABER/Reference_Implementation_KEM/SABER_params.h"
+#include "../external/saber_ref/SABER_params.h"
 
 /* SABER modulus q = 2^13 */
 #define SABER_Q 8192

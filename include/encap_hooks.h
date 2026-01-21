@@ -6,11 +6,11 @@
 #include <string.h>
 #include "params.h"
 #include <stdlib.h>
-#include "../../SABER/Reference_Implementation_KEM/SABER_params.h"
-#include "../../SABER/Reference_Implementation_KEM/rng.h"
-#include "../../SABER/Reference_Implementation_KEM/fips202.h"
-#include "../../SABER/Reference_Implementation_KEM/SABER_indcpa.h"
-#include "../../SABER/Reference_Implementation_KEM/pack_unpack.h"
+#include "../external/saber_ref/SABER_params.h"
+#include "../external/saber_ref/rng.h"
+#include "../external/saber_ref/fips202.h"
+#include "../external/saber_ref/SABER_indcpa.h"
+#include "../external/saber_ref/pack_unpack.h"
 
 /*
    Все низкоуровневые операции (случайные байты, хеши, KDF‐fail,

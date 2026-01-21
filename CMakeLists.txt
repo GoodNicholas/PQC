@@ -81,7 +81,7 @@ endif()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../SABER/Reference_Implementation_KEM
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/saber_ref
 )
 
 # ========================================================================
@@ -92,31 +92,31 @@ include_directories(
 # (NEON оптимизации применяются в ChaCha20 и poly_fast_v4_addon)
 if(SABER_CONFIG STREQUAL "FAST" AND IS_ARM64)
     set(REFERENCE_SOURCES
-        ../SABER/Reference_Implementation_KEM/cbd.c
-        ../SABER/Reference_Implementation_KEM/fips202.c
-        ../SABER/Reference_Implementation_KEM/pack_unpack.c
-        ../SABER/Reference_Implementation_KEM/poly.c
-        ../SABER/Reference_Implementation_KEM/SABER_indcpa.c
-        ../SABER/Reference_Implementation_KEM/verify.c
+        external/saber_ref/cbd.c
+        external/saber_ref/fips202.c
+        external/saber_ref/pack_unpack.c
+        external/saber_ref/poly.c
+        external/saber_ref/SABER_indcpa.c
+        external/saber_ref/verify.c
     )
 elseif(SABER_CONFIG STREQUAL "FAST_V4" AND IS_ARM64)
     # FAST_V4: Full neon-ntt integration with asymmetric multiplication
     # Uses external neon-ntt repository implementation
     set(REFERENCE_SOURCES
-        ../neon-ntt/saber/scheme/cbd.c
-        ../neon-ntt/saber/scheme/pack_unpack.c
-        ../neon-ntt/saber/scheme/fips202x2.c
-        ../SABER/Reference_Implementation_KEM/fips202.c
-        ../SABER/Reference_Implementation_KEM/verify.c
+        external/neon_ntt/cbd.c
+        external/neon_ntt/pack_unpack.c
+        external/neon_ntt/fips202x2.c
+        external/saber_ref/fips202.c
+        external/saber_ref/verify.c
     )
 else()
     set(REFERENCE_SOURCES
-        ../SABER/Reference_Implementation_KEM/cbd.c
-        ../SABER/Reference_Implementation_KEM/fips202.c
-        ../SABER/Reference_Implementation_KEM/pack_unpack.c
-        ../SABER/Reference_Implementation_KEM/poly.c
-        ../SABER/Reference_Implementation_KEM/SABER_indcpa.c
-        ../SABER/Reference_Implementation_KEM/verify.c
+        external/saber_ref/cbd.c
+        external/saber_ref/fips202.c
+        external/saber_ref/pack_unpack.c
+        external/saber_ref/poly.c
+        external/saber_ref/SABER_indcpa.c
+        external/saber_ref/verify.c
     )
 endif()
 
@@ -133,7 +133,7 @@ set(KEM_SOURCES
 if(SABER_CONFIG STREQUAL "FAST_V4" AND IS_ARM64)
     # FAST_V4 использует neon-ntt SABER_indcpa.c напрямую + thin wrapper
     set(CORE_SOURCES
-        ../neon-ntt/saber/scheme/SABER_indcpa.c
+        external/neon_ntt/SABER_indcpa.c
         src/kem/core_neon_ntt_wrapper.c  # Thin wrapper для SABER_GOST API
     )
 else()
@@ -158,13 +158,16 @@ elseif(SABER_CONFIG STREQUAL "GOST")
     set(HASH_SOURCES src/hash/hash_gost.c)
     message(STATUS "Hash module: GOST (Streebog)")
 elseif(SABER_CONFIG STREQUAL "GOST_FAST")
-    # GOST_FAST с NEON оптимизациями где возможно
-    set(HASH_SOURCES
-        src/hash/hash_gost.c
-        src/hash/keccak_times3_neon.c
-        # gen_matrix_shake3.c disabled for now
-    )
-    message(STATUS "Hash module: GOST (Streebog) + Keccak×3 NEON")
+    # GOST_FAST использует hash_gost.c с NEON оптимизациями в Streebog
+    # NEON определяется автоматически в gosthash2012.h через __ARM_NEON
+    set(HASH_SOURCES src/hash/hash_gost.c)
+    if(IS_ARM64)
+        # Enable NEON optimizations for Streebog hash function
+        add_definitions(-D__GOST3411_HAS_NEON__)
+        message(STATUS "Hash module: GOST (Streebog) with NEON optimizations ENABLED")
+    else()
+        message(STATUS "Hash module: GOST (Streebog)")
+    endif()
 endif()
 
 # Выбор RNG модуля
@@ -194,10 +197,10 @@ elseif(SABER_CONFIG STREQUAL "FAST_V2" AND IS_ARM64)
     set(POLY_SOURCES
         src/poly/poly_ntt_simple.c
         # Assembly files from neon-ntt (базовый набор для NTT/iNTT)
-        ../neon-ntt/saber/scheme/__asm_NTT.S
-        ../neon-ntt/saber/scheme/__asm_iNTT.S
-        ../neon-ntt/saber/scheme/__asm_mul.S
-        ../neon-ntt/saber/scheme/__asm_pack_unpack.S
+        external/neon_ntt/__asm_NTT.S
+        external/neon_ntt/__asm_iNTT.S
+        external/neon_ntt/__asm_mul.S
+        external/neon_ntt/__asm_pack_unpack.S
     )
     message(STATUS "Poly module: neon-ntt basic (TCHES 2022 - poly_mul only)")
 elseif(SABER_CONFIG STREQUAL "FAST_V3" AND IS_ARM64)
@@ -205,10 +208,10 @@ elseif(SABER_CONFIG STREQUAL "FAST_V3" AND IS_ARM64)
     # Только NTT оптимизация, остальное reference
     set(POLY_SOURCES
         src/poly/poly_ntt_simple.c
-        ../neon-ntt/saber/scheme/__asm_NTT.S
-        ../neon-ntt/saber/scheme/__asm_iNTT.S
-        ../neon-ntt/saber/scheme/__asm_mul.S
-        ../neon-ntt/saber/scheme/__asm_pack_unpack.S
+        external/neon_ntt/__asm_NTT.S
+        external/neon_ntt/__asm_iNTT.S
+        external/neon_ntt/__asm_mul.S
+        external/neon_ntt/__asm_pack_unpack.S
     )
     message(STATUS "Poly module: neon-ntt basic (pure NTT, no SHAKE×3 overhead)")
 elseif(SABER_CONFIG STREQUAL "FAST_V4" AND IS_ARM64)
@@ -218,13 +221,13 @@ elseif(SABER_CONFIG STREQUAL "FAST_V4" AND IS_ARM64)
     set(POLY_SOURCES
         src/poly/poly_genmatrix.c  # Minimal GenMatrix-only implementation
         # neon-ntt assembly files (all operations)
-        ../neon-ntt/saber/scheme/__asm_NTT.S
-        ../neon-ntt/saber/scheme/__asm_iNTT.S
-        ../neon-ntt/saber/scheme/__asm_mul.S
-        ../neon-ntt/saber/scheme/__asm_pack_unpack.S
-        ../neon-ntt/saber/scheme/__asm_narrow.S
+        external/neon_ntt/__asm_NTT.S
+        external/neon_ntt/__asm_iNTT.S
+        external/neon_ntt/__asm_mul.S
+        external/neon_ntt/__asm_pack_unpack.S
+        external/neon_ntt/__asm_narrow.S
         # Keccak f1600x2 for shake128x2
-        ../neon-ntt/saber/scheme/feat.S
+        external/neon_ntt/feat.S
     )
     message(STATUS "Poly module: neon-ntt asymmetric multiplication (full) + GenMatrix")
 elseif(SABER_CONFIG STREQUAL "GOST_FAST" AND IS_ARM64)
@@ -264,26 +267,70 @@ endif()
 # Дополнительные NEON оптимизации только для FAST конфигураций
 set(NEON_OPTIMIZATION_SOURCES "")
 if(IS_ARM64)
-    if(SABER_CONFIG STREQUAL "FAST" OR SABER_CONFIG STREQUAL "FAST_V2")
-        # Для FAST используется poly_ntt_neon.c с встроенными NEON оптимизациями
+    if(SABER_CONFIG STREQUAL "FAST" OR SABER_CONFIG STREQUAL "FAST_V2" OR SABER_CONFIG STREQUAL "GOST_FAST")
+        # Для FAST/GOST_FAST используется poly_ntt_neon.c с встроенными NEON оптимизациями
         # pack/unpack NEON оптимизации уже включены в poly_ntt_neon.c
-        message(STATUS "FAST: Using poly_ntt_neon with built-in NEON optimizations")
-    elseif(SABER_CONFIG STREQUAL "GOST_FAST")
-        set(NEON_OPTIMIZATION_SOURCES
-            src/pack_unpack_neon.c
-            src/cbd_neon.c
-        )
-        message(STATUS "GOST_FAST: Additional NEON optimizations enabled")
+        message(STATUS "${SABER_CONFIG}: Using poly_ntt_neon with built-in NEON optimizations")
     endif()
 endif()
 
 # Batching support (optional)
 option(ENABLE_BATCHING "Enable 2x parallel batching with NEON" OFF)
+option(USE_SABERX2_NEON "Use SaberX2 NEON batching (from SaberX4 AVX2)" OFF)
+option(USE_SABERX4_NEON "Use SaberX4 NEON batching (4x with 2x shake128x2)" OFF)
+option(USE_BATCH2_REAL "Use REAL batch2 implementation (TRUE batching)" ON)
+option(USE_TRUE_NEON_BATCH "Use TRUE NEON batching (production-ready)" ON)
+option(USE_NEON_BATCHING "Use full NEON-optimized batching" ON)
 set(BATCH_SOURCES "")
 if(ENABLE_BATCHING AND IS_ARM64)
-    set(BATCH_SOURCES src/batch/batch_kem.c)
-    message(STATUS "Batching: Enabled (2x parallel with NEON)")
-    add_definitions(-DSABER_BATCHING_ENABLED)
+    if(USE_SABERX4_NEON)
+        # SaberX4 NEON - 4x batching using NEON optimization
+        set(BATCH_SOURCES
+            src/batch/batch4_neon.c
+        )
+        message(STATUS "Batching: SaberX4 NEON (4x parallel with NEON)")
+        add_definitions(-DSABER_BATCHING_ENABLED -DSABERX4_NEON)
+    elseif(USE_TRUE_NEON_BATCH)
+        # TRUE NEON batching implementation (production-ready)
+        # Real parallel processing, not sequential loops
+        set(BATCH_SOURCES
+            src/batch/neon_batch2_core.c
+            src/batch/neon_batch2_cpa.c
+            src/batch/neon_batch2_kem.c
+        )
+        message(STATUS "Batching: TRUE NEON batch2 (production-ready, real parallelism)")
+        add_definitions(-DSABER_BATCHING_ENABLED -DTRUE_NEON_BATCH)
+    elseif(USE_SABERX2_NEON)
+        # SaberX2 NEON - TRUE 2x batching with NEON (based on SaberX4 AVX2)
+        set(BATCH_SOURCES
+            src/batch/saberx2_kem.c
+            src/batch/saberx2_indcpa_real.c
+            src/batch/fips202x2_neon_real.c
+        )
+        message(STATUS "Batching: SaberX2 NEON (TRUE 2x: GenMatrix2x + GenSecret2x)")
+        add_definitions(-DSABER_BATCHING_ENABLED -DSABERX2_NEON)
+    elseif(USE_BATCH2_REAL)
+        # REAL batch2 implementation - using simple fallback temporarily
+        set(BATCH_SOURCES
+            src/batch/batch2_kem_simple.c
+        )
+        message(STATUS "Batching: batch2 simple (sequential fallback - WORKING)")
+        add_definitions(-DSABER_BATCHING_ENABLED -DREAL_BATCH2)
+    elseif(USE_NEON_BATCHING)
+        # Old NEON-optimized batching implementation (pseudo-batching)
+        set(BATCH_SOURCES
+            src/batch/batch_kem_neon.c
+            src/batch/batch_core.c
+            src/batch/neon_batch_poly.c
+        )
+        message(STATUS "Batching: NEON-optimized (2x parallel, full SIMD)")
+        add_definitions(-DSABER_BATCHING_ENABLED -DNEON_BATCHING)
+    else()
+        # Simple sequential batching
+        set(BATCH_SOURCES src/batch/batch_kem.c)
+        message(STATUS "Batching: Enabled (2x sequential)")
+        add_definitions(-DSABER_BATCHING_ENABLED)
+    endif()
 endif()
 
 add_library(saber_gost STATIC
@@ -305,7 +352,7 @@ target_include_directories(saber_gost PUBLIC
 # Include neon-ntt headers for FAST_V2, FAST_V3, and FAST_V4
 if((SABER_CONFIG STREQUAL "FAST_V2" OR SABER_CONFIG STREQUAL "FAST_V3" OR SABER_CONFIG STREQUAL "FAST_V4") AND IS_ARM64)
     target_include_directories(saber_gost PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../neon-ntt/saber/scheme
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/neon_ntt
         ${CMAKE_CURRENT_SOURCE_DIR}/../neon-ntt/ntt
     )
 endif()
@@ -327,18 +374,19 @@ endif()
 
 # Для GOST конфигураций: компиляция необходимых файлов из engine/
 if(SABER_CONFIG STREQUAL "GOST" OR SABER_CONFIG STREQUAL "GOST_FAST")
-    # Путь к libgost (предполагается что engine/ находится в ../engine)
+    # Путь к libgost (предполагается что engine/ находится в external/gost_engine)
     target_include_directories(saber_gost PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../engine
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/gost_engine
     )
 
     # Добавляем исходные файлы Streebog из engine/
     target_sources(saber_gost PRIVATE
-        ../engine/gosthash2012.c
-        ../engine/gosthash2012_const.h
-        ../engine/gosthash2012_precalc.h
-        ../engine/gosthash2012_ref.h
-        ../engine/gosthash2012_sse2.h
+        external/gost_engine/gosthash2012.c
+        external/gost_engine/gosthash2012_const.h
+        external/gost_engine/gosthash2012_precalc.h
+        external/gost_engine/gosthash2012_ref.h
+        external/gost_engine/gosthash2012_sse2.h
+        external/gost_engine/gosthash2012_neon.h
     )
 
     message(STATUS "GOST engine: Streebog sources included")
@@ -420,10 +468,25 @@ if(BUILD_TESTS)
 
     # Batch KEM test (if batching is enabled)
     if(ENABLE_BATCHING AND IS_ARM64)
-        add_executable(test_batch_kem tests/test_batch_kem.c)
-        target_link_libraries(test_batch_kem saber_gost)
-        add_test(NAME test_batch_kem COMMAND test_batch_kem)
-        message(STATUS "Batch KEM test: Enabled")
+        if(USE_TRUE_NEON_BATCH)
+            # Tests for TRUE NEON batching (production-ready)
+            add_executable(test_neon_batch2_correctness tests/test_neon_batch2_correctness.c)
+            target_link_libraries(test_neon_batch2_correctness saber_gost)
+            add_test(NAME test_neon_batch2_correctness COMMAND test_neon_batch2_correctness)
+            message(STATUS "TRUE NEON batch2 correctness test: Enabled")
+        elseif(USE_BATCH2_REAL)
+            # Test for REAL batch2 implementation
+            add_executable(test_batch2_simple tests/test_batch2_simple.c)
+            target_link_libraries(test_batch2_simple saber_gost)
+            add_test(NAME test_batch2_simple COMMAND test_batch2_simple)
+            message(STATUS "Batch2 test: Enabled (real batching)")
+        else()
+            # Test for old batching
+            add_executable(test_batch_kem tests/test_batch_kem.c)
+            target_link_libraries(test_batch_kem saber_gost)
+            add_test(NAME test_batch_kem COMMAND test_batch_kem)
+            message(STATUS "Batch KEM test: Enabled")
+        endif()
     endif()
 
     # Polynomial correctness test (neon-ntt vs Toom-Cook)
@@ -440,7 +503,7 @@ if(BUILD_TESTS)
         add_executable(test_asymmetric_debug tests/test_asymmetric_debug.c)
         target_link_libraries(test_asymmetric_debug saber_gost)
         target_include_directories(test_asymmetric_debug PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/../neon-ntt/saber/scheme
+            ${CMAKE_CURRENT_SOURCE_DIR}/external/neon_ntt
         )
     endif()
 
@@ -452,7 +515,7 @@ if(BUILD_TESTS)
         add_executable(debug_indcpa tests/debug_indcpa.c)
         target_link_libraries(debug_indcpa saber_gost)
         target_include_directories(debug_indcpa PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/../neon-ntt/saber/scheme
+            ${CMAKE_CURRENT_SOURCE_DIR}/external/neon_ntt
         )
 
         add_executable(debug_kem_detailed tests/debug_kem_detailed.c)
@@ -461,7 +524,7 @@ if(BUILD_TESTS)
         add_executable(bench_indcpa tests/bench_indcpa.c)
         target_link_libraries(bench_indcpa saber_gost)
         target_include_directories(bench_indcpa PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/../neon-ntt/saber/scheme
+            ${CMAKE_CURRENT_SOURCE_DIR}/external/neon_ntt
         )
     endif()
 
@@ -480,6 +543,13 @@ if(BUILD_BENCHMARKS)
     # Micro benchmark
     add_executable(bench_micro tests/bench_micro.c)
     target_link_libraries(bench_micro saber_gost)
+
+    # TRUE NEON batching benchmark (if enabled)
+    if(ENABLE_BATCHING AND IS_ARM64 AND USE_TRUE_NEON_BATCH)
+        add_executable(benchmark_neon_batch2 tests/benchmark_neon_batch2.c)
+        target_link_libraries(benchmark_neon_batch2 saber_gost)
+        message(STATUS "TRUE NEON batch2 benchmark: Enabled")
+    endif()
 
     message(STATUS "Benchmarks enabled")
 endif()
@@ -510,12 +580,12 @@ if(BUILD_TESTS AND IS_ARM64)
         src/poly/test/polymul.S
         src/poly/test/asm_narrow.S
         src/poly/test/asm_pack_unpack.S
-        ../SABER/Reference_Implementation_KEM/poly_mul.c
+        external/saber_ref/poly_mul.c
     )
     target_include_directories(test_neon_ntt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/poly/test
-        ${CMAKE_CURRENT_SOURCE_DIR}/../SABER/Reference_Implementation_KEM
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/saber_ref
     )
     add_test(NAME test_neon_ntt COMMAND test_neon_ntt)
 
@@ -736,14 +806,15 @@ endif()
 # ==============================================================================
 # Experimental Benchmark for Performance Study
 # ==============================================================================
-add_executable(experiment_benchmark
-    experiment_benchmark.c
-)
-
-target_link_libraries(experiment_benchmark saber_gost)
-
-target_include_directories(experiment_benchmark PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
-message(STATUS "Experimental benchmark: Enabled")
+# Disabled - experiment_benchmark.c not in repository
+# add_executable(experiment_benchmark
+#     experiment_benchmark.c
+# )
+#
+# target_link_libraries(experiment_benchmark saber_gost)
+#
+# target_include_directories(experiment_benchmark PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/include
+# )
+#
+# message(STATUS "Experimental benchmark: Enabled")

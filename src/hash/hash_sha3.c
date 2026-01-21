@@ -9,9 +9,9 @@
 #include "../../include/hash.h"
 #include "../../include/config.h"
 #include "../../include/params.h"
-#include "../../../SABER/Reference_Implementation_KEM/fips202.h"
-#include "../../../SABER/Reference_Implementation_KEM/poly.h"
-#include "../../../SABER/Reference_Implementation_KEM/pack_unpack.h"
+#include "../../external/saber_ref/fips202.h"
+#include "../../external/saber_ref/poly.h"
+#include "../../external/saber_ref/pack_unpack.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,7 +19,7 @@
 /*
 #if defined(USE_SHAKE4X_NEON) && defined(__ARM_NEON) && (SABER_L == 3)
 #include "keccak_times3_neon.h"
-#include "../../../SABER/Reference_Implementation_KEM/pack_unpack.h"
+#include "../../external/saber_ref/pack_unpack.h"
 #endif
 */
 

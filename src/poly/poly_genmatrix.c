@@ -10,10 +10,10 @@
  */
 
 #include <stdio.h>
-#include "../../../SABER/Reference_Implementation_KEM/api.h"
-#include "../../../SABER/Reference_Implementation_KEM/poly.h"
-#include "../../../SABER/Reference_Implementation_KEM/pack_unpack.h"
-#include "../../../SABER/Reference_Implementation_KEM/fips202.h"
+#include "../../external/saber_ref/api.h"
+#include "../../external/saber_ref/poly.h"
+#include "../../external/saber_ref/pack_unpack.h"
+#include "../../external/saber_ref/fips202.h"
 
 /**
  * GenMatrix - Generate public matrix A from seed

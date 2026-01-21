@@ -17,7 +17,7 @@
 #include "../../include/hash.h"
 #include "../../include/params.h"
 #include "../chacha20_neon_common.h"
-#include "../../../SABER/Reference_Implementation_KEM/fips202.h"
+#include "../../external/saber_ref/fips202.h"
 #include <string.h>
 #include <stdlib.h>
 

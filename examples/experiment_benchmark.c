@@ -25,7 +25,7 @@
 #endif
 
 // Experimental parameters (per METHODOLOGY.md section 6.2)
-#define N_MEASUREMENTS 1000
+#define N_MEASUREMENTS 5000
 #define N_WARMUP 100
 
 /**

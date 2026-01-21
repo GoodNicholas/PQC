@@ -22,7 +22,7 @@
 
 #else
     /* Стандартные референсные версии */
-    #include "../../SABER/Reference_Implementation_KEM/pack_unpack.h"
+    #include "../external/saber_ref/pack_unpack.h"
 #endif
 
 #endif /* PACK_UNPACK_FAST_H */
